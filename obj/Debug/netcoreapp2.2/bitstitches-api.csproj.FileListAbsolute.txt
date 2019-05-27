@@ -1,0 +1,14 @@
+/hdd/Programming/Professional/bitstitches-api/bin/Debug/netcoreapp2.2/bitstitches-api.deps.json
+/hdd/Programming/Professional/bitstitches-api/bin/Debug/netcoreapp2.2/bitstitches-api.runtimeconfig.json
+/hdd/Programming/Professional/bitstitches-api/bin/Debug/netcoreapp2.2/bitstitches-api.runtimeconfig.dev.json
+/hdd/Programming/Professional/bitstitches-api/bin/Debug/netcoreapp2.2/bitstitches-api.dll
+/hdd/Programming/Professional/bitstitches-api/bin/Debug/netcoreapp2.2/bitstitches-api.pdb
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.csprojAssemblyReference.cache
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.csproj.CoreCompileInputs.cache
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.RazorAssemblyInfo.cache
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.RazorAssemblyInfo.cs
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.AssemblyInfoInputs.cache
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.AssemblyInfo.cs
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.RazorTargetAssemblyInfo.cache
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.dll
+/hdd/Programming/Professional/bitstitches-api/obj/Debug/netcoreapp2.2/bitstitches-api.pdb
