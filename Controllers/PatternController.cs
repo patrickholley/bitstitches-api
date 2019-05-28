@@ -16,7 +16,7 @@ namespace bitstitches_api.Controllers
     [ApiController]
     public class PatternController : ControllerBase
     {
-        private Image convertBase64StringToImage(string base64String)
+        private static Image convertBase64StringToImage(string base64String)
         {
             byte[] imageBytes = Convert.FromBase64String(base64String);
             using (MemoryStream ms = new MemoryStream(imageBytes, 0, imageBytes.Length))
@@ -26,7 +26,7 @@ namespace bitstitches_api.Controllers
             }
         }
 
-        private string convertImageToBase64String(Image image)
+        private static string convertImageToBase64String(Image image)
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -35,17 +35,43 @@ namespace bitstitches_api.Controllers
             }
         }
 
+        private static void drawPixel(Bitmap imageBitmap, Bitmap convertedBitmap, int x, int y, int pixelSize)
+        {
+            Color pixelColor = imageBitmap.GetPixel(x, y);
+
+            for (int i = 0; i < pixelSize; i++) {
+                for (int j = 0; j < pixelSize; j++) {
+                    convertedBitmap.SetPixel((x * pixelSize) + i, (y * pixelSize) + j, i == pixelSize - 1 || j == pixelSize - 1 ? Color.FromArgb(255, 64, 64, 64) : pixelColor);
+                }
+            }
+        }
+
+        private static Image iterateThroughImagePixels(Image image)
+        {
+            int pixelSize = 5;
+            Bitmap imageBitmap = new Bitmap(image);
+            Bitmap convertedBitmap = new Bitmap(image.Width * pixelSize, image.Height * pixelSize);
+
+            for (int i = 0; i < image.Width; i++)
+            {
+                for (int j = 0; j < image.Height; j++)
+                {
+                    drawPixel(imageBitmap, convertedBitmap, i, j, pixelSize);
+                }
+            }
+
+            return convertedBitmap;
+        }
+
         [HttpPost]
         public async Task<ActionResult<string>> GeneratePattern()
         {
             StreamReader reader = new StreamReader(Request.Body);
             string requestString = await reader.ReadToEndAsync();
             string base64String = requestString.Replace("data:image/png;base64,", "");
-            Console.WriteLine(base64String);
             Image image = convertBase64StringToImage(base64String);
-            string result = convertImageToBase64String(image);
-
-            return result;
+            Image convertedImage = iterateThroughImagePixels(image);
+            return convertImageToBase64String(convertedImage);
         }
     }
 }
