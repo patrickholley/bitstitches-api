@@ -16,6 +16,8 @@ namespace bitstitches_api.Controllers
     [ApiController]
     public class PatternController : ControllerBase
     {
+        private static int pixelSize = 5;
+
         private static Image convertBase64StringToImage(string base64String)
         {
             byte[] imageBytes = Convert.FromBase64String(base64String);
@@ -35,20 +37,25 @@ namespace bitstitches_api.Controllers
             }
         }
 
-        private static void drawPixel(Bitmap imageBitmap, Bitmap convertedBitmap, int x, int y, int pixelSize)
+        private static void drawPixel(Color imagePixelColor, Bitmap convertedBitmap, int x, int y)
         {
-            Color pixelColor = imageBitmap.GetPixel(x, y);
-
             for (int i = 0; i < pixelSize; i++) {
                 for (int j = 0; j < pixelSize; j++) {
-                    convertedBitmap.SetPixel((x * pixelSize) + i, (y * pixelSize) + j, i == pixelSize - 1 || j == pixelSize - 1 ? Color.FromArgb(255, 64, 64, 64) : pixelColor);
+                    Color convertedPixelColor = i == pixelSize - 1 || j == pixelSize - 1
+                        ? Color.FromArgb(255, 64, 64, 64)
+                        : imagePixelColor;
+
+                    convertedBitmap.SetPixel(
+                        (x * pixelSize) + i,
+                        (y * pixelSize) + j,
+                        convertedPixelColor
+                    );
                 }
             }
         }
 
         private static Image iterateThroughImagePixels(Image image)
         {
-            int pixelSize = 5;
             Bitmap imageBitmap = new Bitmap(image);
             Bitmap convertedBitmap = new Bitmap(image.Width * pixelSize, image.Height * pixelSize);
 
@@ -56,7 +63,7 @@ namespace bitstitches_api.Controllers
             {
                 for (int j = 0; j < image.Height; j++)
                 {
-                    drawPixel(imageBitmap, convertedBitmap, i, j, pixelSize);
+                    drawPixel(imageBitmap.GetPixel(i, j), convertedBitmap, i, j);
                 }
             }
 
