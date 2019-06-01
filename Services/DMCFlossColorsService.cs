@@ -12,7 +12,6 @@ namespace bitstitches_api.Services
       Dictionary<string, DMCFlossColor> ThisDictionary = new Dictionary<string, DMCFlossColor>();
       string dmcText = System.IO.File.ReadAllText("lib/constants/DMCFlossColors.json");
       DMCFlossColor[] DMCFlossColorsArray = JsonConvert.DeserializeObject<DMCFlossColor[]>(dmcText);
-      Console.WriteLine(DMCFlossColorsArray);
 
       foreach (DMCFlossColor DMCFlossColor in DMCFlossColorsArray)
       {

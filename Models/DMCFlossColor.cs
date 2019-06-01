@@ -8,9 +8,12 @@ namespace bitstitches_api.Models
   {
     public DMCFlossColor(string ID, string Name, string RGB)
     {
+      Console.WriteLine(ID);
+      Console.WriteLine(Name);
+      Console.WriteLine(RGB);
       this.ID = ID;
       this.Name = Name;
-      this.RGB = RGB;
+      this.RGB = ColorTranslator.FromHtml($"#{RGB}");
     }
 
     [JsonProperty("ID")]
@@ -18,6 +21,6 @@ namespace bitstitches_api.Models
     [JsonProperty("Name")]
     public string Name { get; }
     [JsonProperty("RGB")]
-    public string RGB { get; }
+    public Color RGB { get; }
   }
 }

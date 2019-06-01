@@ -73,8 +73,7 @@ namespace bitstitches_api.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> GeneratePattern()
         {
-            StreamReader reader = new StreamReader(Request.Body);
-            string requestString = await reader.ReadToEndAsync();
+            string requestString = await new StreamReader(Request.Body).ReadToEndAsync();
             string base64String = requestString.Replace("data:image/png;base64,", "");
             Image image = convertBase64StringToImage(base64String);
             Image convertedImage = iterateThroughImagePixels(image);
