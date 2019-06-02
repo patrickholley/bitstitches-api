@@ -9,6 +9,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using bitstitches_api.Models;
+using bitstitches_api.Services;
 
 namespace bitstitches_api.Controllers
 {
@@ -63,7 +67,8 @@ namespace bitstitches_api.Controllers
             {
                 for (int j = 0; j < image.Height; j++)
                 {
-                    drawPixel(imageBitmap.GetPixel(i, j), convertedBitmap, i, j);
+                    Color pixelColor = DMCFlossColorsService.FindClosestDMCFlossColor(imageBitmap.GetPixel(i, j)).Color;
+                    drawPixel(pixelColor, convertedBitmap, i, j);
                 }
             }
 
@@ -73,8 +78,14 @@ namespace bitstitches_api.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> GeneratePattern()
         {
-            string requestString = await new StreamReader(Request.Body).ReadToEndAsync();
-            string base64String = requestString.Replace("data:image/png;base64,", "");
+            JObject requestJson = (JObject) JsonConvert.DeserializeObject(
+                await new StreamReader(Request.Body).ReadToEndAsync()
+            );
+            string base64String = requestJson["requestImageString"].ToString().Replace("data:image/png;base64,", "");
+            if (requestJson["selectedColors"] == null)
+            {
+                // autoselect colors
+            }
             Image image = convertBase64StringToImage(base64String);
             Image convertedImage = iterateThroughImagePixels(image);
             return convertImageToBase64String(convertedImage);
