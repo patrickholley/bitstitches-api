@@ -10,8 +10,6 @@ namespace bitstitches_api.Services
   {
     static DMCFlossColorsService()
     {
-      ClosestDMCFlossColorsCache = new Dictionary<Color, DMCFlossColor>();
-
       Dictionary<string, DMCFlossColor> ThisDictionary = new Dictionary<string, DMCFlossColor>();
       string dmcText = System.IO.File.ReadAllText("lib/constants/DMCFlossColors.json");
       DMCFlossColor[] DMCFlossColorsArray = JsonConvert.DeserializeObject<DMCFlossColor[]>(dmcText);
@@ -24,15 +22,22 @@ namespace bitstitches_api.Services
       DMCFlossColors = ThisDictionary;
     }
 
-    public static DMCFlossColor FindClosestDMCFlossColor(Color inColor)
+    public static DMCFlossColor FindClosestDMCFlossColor(
+      Color inColor,
+      Dictionary<Color, DMCFlossColor> closestColorsCache,
+      Dictionary<string, DMCFlossColor> selectedColors
+    )
     {
-      if (!ClosestDMCFlossColorsCache.ContainsKey(inColor))
-      {
+      Dictionary<string, DMCFlossColor> __selectedColors = selectedColors != null
+        ? selectedColors
+        : DMCFlossColors;
 
+      if (!closestColorsCache.ContainsKey(inColor))
+      {
         double? closestDistance = null;
         string closestIndex = null;
 
-        foreach(KeyValuePair<string, DMCFlossColor> entry in DMCFlossColors)
+        foreach(KeyValuePair<string, DMCFlossColor> entry in __selectedColors)
         {
           Color entryColor = entry.Value.Color;
 
@@ -51,13 +56,12 @@ namespace bitstitches_api.Services
 
         }
 
-        ClosestDMCFlossColorsCache[inColor] = DMCFlossColors[closestIndex];
+        closestColorsCache[inColor] = __selectedColors[closestIndex];
       }
 
-      return ClosestDMCFlossColorsCache[inColor];
+      return closestColorsCache[inColor];
     }
 
-    public static Dictionary<Color, DMCFlossColor> ClosestDMCFlossColorsCache { get; set; }
     public static Dictionary<string, DMCFlossColor> DMCFlossColors { get; }
   }
 }

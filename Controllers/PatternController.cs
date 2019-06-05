@@ -20,9 +20,9 @@ namespace bitstitches_api.Controllers
     [ApiController]
     public class PatternController : ControllerBase
     {
-        private static int pixelSize = 5;
+        private static int PixelSize = 5;
 
-        private static Image convertBase64StringToImage(string base64String)
+        private static Image ConvertBase64StringToImage(string base64String)
         {
             byte[] imageBytes = Convert.FromBase64String(base64String);
             using (MemoryStream ms = new MemoryStream(imageBytes, 0, imageBytes.Length))
@@ -32,7 +32,7 @@ namespace bitstitches_api.Controllers
             }
         }
 
-        private static string convertImageToBase64String(Image image)
+        private static string ConvertImageToBase64String(Image image)
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -41,38 +41,92 @@ namespace bitstitches_api.Controllers
             }
         }
 
-        private static void drawPixel(Color imagePixelColor, Bitmap convertedBitmap, int x, int y)
+        private static void DrawPixel(Color imagePixelColor, Bitmap convertedBitmap, int x, int y)
         {
-            for (int i = 0; i < pixelSize; i++) {
-                for (int j = 0; j < pixelSize; j++) {
-                    Color convertedPixelColor = i == pixelSize - 1 || j == pixelSize - 1
-                        ? Color.FromArgb(255, 64, 64, 64)
+            for (int i = 0; i < PixelSize; i++) {
+                for (int j = 0; j < PixelSize; j++) {
+                    Color convertedPixelColor = i == PixelSize - 1 || j == PixelSize - 1
+                        ? Color.FromArgb(255, 63, 63, 63)
                         : imagePixelColor;
 
                     convertedBitmap.SetPixel(
-                        (x * pixelSize) + i,
-                        (y * pixelSize) + j,
+                        (x * PixelSize) + i,
+                        (y * PixelSize) + j,
                         convertedPixelColor
                     );
                 }
             }
         }
 
-        private static Image iterateThroughImagePixels(Image image)
+        private static Image DrawConvertedImagePixels(
+            Image image,
+            Dictionary<string, DMCFlossColor> selectedColors
+        )
         {
             Bitmap imageBitmap = new Bitmap(image);
-            Bitmap convertedBitmap = new Bitmap(image.Width * pixelSize, image.Height * pixelSize);
+            Bitmap convertedBitmap = new Bitmap(image.Width * PixelSize, image.Height * PixelSize);
+            Dictionary<Color, DMCFlossColor> closestColorsCache = new Dictionary<Color, DMCFlossColor>();
 
             for (int i = 0; i < image.Width; i++)
             {
                 for (int j = 0; j < image.Height; j++)
                 {
-                    Color pixelColor = DMCFlossColorsService.FindClosestDMCFlossColor(imageBitmap.GetPixel(i, j)).Color;
-                    drawPixel(pixelColor, convertedBitmap, i, j);
+                    Color pixelColor = DMCFlossColorsService
+                        .FindClosestDMCFlossColor(
+                            imageBitmap.GetPixel(i, j),
+                            closestColorsCache,
+                            selectedColors
+                        ).Color;
+
+                    DrawPixel(pixelColor, convertedBitmap, i, j);
                 }
             }
 
             return convertedBitmap;
+        }
+
+        private static Dictionary<string, DMCFlossColor> GetSelectedColors(JToken requestSelectedColors)
+        {
+            Dictionary<string, DMCFlossColor> selectedColors = new Dictionary<string, DMCFlossColor>();
+
+            string[] selectedColorsIDs = requestSelectedColors.ToObject<string[]>();
+            foreach(string id in selectedColorsIDs)
+            {
+                selectedColors.Add(id, DMCFlossColorsService.DMCFlossColors[id]);
+            }
+
+            return selectedColors;
+        }
+
+        private static string[] GetTopColors(Image image, ushort colorsCount)
+        {
+            Dictionary<Color, DMCFlossColor> closestColorsCache = new Dictionary<Color, DMCFlossColor>();
+            Dictionary <string, int> colorsCounts = new Dictionary<string, int>();
+            Bitmap imageBitmap = new Bitmap(image);
+
+            for (int i = 0; i < image.Width; i++)
+            {
+                for (int j = 0; j < image.Height; j++)
+                {
+                    Color color = DMCFlossColorsService
+                        .FindClosestDMCFlossColor(
+                            imageBitmap.GetPixel(i, j),
+                            closestColorsCache,
+                            null
+                        ).Color;
+                    string colorString = $"{color.R.ToString("X2")}{color.G.ToString("X2")}{color.B.ToString("X2")}";
+                    if (colorsCounts.ContainsKey(colorString))
+                    {
+                        colorsCounts[colorString] = colorsCounts[colorString] + 1;
+                    }
+                    else
+                    {
+                        colorsCounts.Add(colorString, 1);
+                    }
+                }
+            }
+
+            return (from entry in colorsCounts orderby entry.Value select entry.Key).Take(colorsCount).ToArray();
         }
 
         [HttpPost]
@@ -81,14 +135,13 @@ namespace bitstitches_api.Controllers
             JObject requestJson = (JObject) JsonConvert.DeserializeObject(
                 await new StreamReader(Request.Body).ReadToEndAsync()
             );
-            string base64String = requestJson["requestImageString"].ToString().Replace("data:image/png;base64,", "");
-            if (requestJson["selectedColors"] == null)
-            {
-                // autoselect colors
-            }
-            Image image = convertBase64StringToImage(base64String);
-            Image convertedImage = iterateThroughImagePixels(image);
-            return convertImageToBase64String(convertedImage);
+            string base64String = requestJson["imageString"]
+                .ToString().Replace("data:image/png;base64,", "");
+            Image image = ConvertBase64StringToImage(base64String);
+            string[] topColors = GetTopColors(image, ushort.Parse(requestJson["colorCount"].ToString()));
+            Dictionary<string, DMCFlossColor> selectedColors = GetSelectedColors(requestJson["selectedColors"]);
+            Image convertedImage = DrawConvertedImagePixels(image, selectedColors);
+            return ConvertImageToBase64String(convertedImage);
         }
     }
 }
