@@ -98,7 +98,12 @@ namespace bitstitches_api.Controllers
             return selectedColors;
         }
 
-        private static string[] GetTopColors(Image image, ushort colorsCount)
+        private static string ConvertColorToHexadecimal(Color color)
+        {
+            return $"{color.R.ToString("X2")}{color.G.ToString("X2")}{color.B.ToString("X2")}";
+        }
+
+        private static Dictionary<string, DMCFlossColor> GetTopColors(Image image, ushort colorsCount)
         {
             Dictionary<Color, DMCFlossColor> closestColorsCache = new Dictionary<Color, DMCFlossColor>();
             Dictionary <string, int> colorsCounts = new Dictionary<string, int>();
@@ -114,7 +119,7 @@ namespace bitstitches_api.Controllers
                             closestColorsCache,
                             null
                         ).Color;
-                    string colorString = $"{color.R.ToString("X2")}{color.G.ToString("X2")}{color.B.ToString("X2")}";
+                    string colorString = ConvertColorToHexadecimal(color);
                     if (colorsCounts.ContainsKey(colorString))
                     {
                         colorsCounts[colorString] = colorsCounts[colorString] + 1;
@@ -126,7 +131,17 @@ namespace bitstitches_api.Controllers
                 }
             }
 
-            return (from entry in colorsCounts orderby entry.Value select entry.Key).Take(colorsCount).ToArray();
+            foreach(KeyValuePair<string, int> entry in colorsCounts)
+            {
+                if (entry.Value > 1300) Console.WriteLine($"{entry.Key}: {entry.Value}");
+            }
+
+            return (from entry in colorsCounts orderby entry.Value descending select entry.Key)
+                .Take(colorsCount)
+                .ToDictionary(
+                    key => key,
+                    key => (from entry in DMCFlossColorsService.DMCFlossColors where ConvertColorToHexadecimal(entry.Value.Color) == key select entry.Value).First()
+                );
         }
 
         [HttpPost]
@@ -138,9 +153,9 @@ namespace bitstitches_api.Controllers
             string base64String = requestJson["imageString"]
                 .ToString().Replace("data:image/png;base64,", "");
             Image image = ConvertBase64StringToImage(base64String);
-            string[] topColors = GetTopColors(image, ushort.Parse(requestJson["colorCount"].ToString()));
-            Dictionary<string, DMCFlossColor> selectedColors = GetSelectedColors(requestJson["selectedColors"]);
-            Image convertedImage = DrawConvertedImagePixels(image, selectedColors);
+            Dictionary<string, DMCFlossColor> topColors = GetTopColors(image, ushort.Parse(requestJson["colorCount"].ToString()));
+            /* Dictionary<string, DMCFlossColor> selectedColors = GetSelectedColors(requestJson["selectedColors"]); */
+            Image convertedImage = DrawConvertedImagePixels(image, topColors);
             return ConvertImageToBase64String(convertedImage);
         }
     }
