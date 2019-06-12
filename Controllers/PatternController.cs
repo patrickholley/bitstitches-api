@@ -135,8 +135,10 @@ namespace bitstitches_api.Controllers {
         await new StreamReader(Request.Body).ReadToEndAsync()
       );
 
-      Image image = ConvertBase64StringToImage(requestJson["imageString"]
-        .ToString().Replace("data:image/png;base64,", ""));
+      Image image = ConvertBase64StringToImage(
+        requestJson["imageString"]
+          .ToString().Replace("data:image/png;base64,", "")
+      );
       ushort colorCount = ushort.Parse(requestJson["colorCount"].ToString());
       Dictionary<string, DMCFlossColor> selectedColors = GetSelectedColors(requestJson["selectedColors"]);
 
@@ -144,7 +146,12 @@ namespace bitstitches_api.Controllers {
       Dictionary<string, DMCFlossColor> topColors = GetTopColors(image, colorCount, closestColorsCache, selectedColors);
       Image convertedImage = DrawConvertedImagePixels(image, topColors, closestColorsCache);
       
-      return ConvertImageToBase64String(convertedImage);
+      return JsonConvert.SerializeObject(new
+        {
+          image = ConvertImageToBase64String(convertedImage),
+          usedColors = topColors.Values.ToArray()
+        }
+      );
     }
   }
 }
